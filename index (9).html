@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1218">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<title>Santo Rosário</title>
+<style>
+:root{--bg:#0f1218;--ink:#ece4d3;--dim:#8d93a3;--brass:#c9a45c;--wood:#6e2b2f;--wood2:#a34a50;--panel:#171b24}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif;overscroll-behavior:none;user-select:none}
+#app{height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{padding:14px 20px 6px;text-align:center}
+header h1{margin:0;font-size:1.05rem;font-weight:600;letter-spacing:.02em}
+header p{margin:2px 0 0;color:var(--dim);font-size:.85rem}
+.dots{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.dots i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--brass);transition:.3s}
+.dots i.on{background:var(--brass);box-shadow:0 0 8px var(--brass)}
+.dots i.cur{transform:scale(1.35)}
+#stage{flex:1;position:relative;overflow:hidden;touch-action:none;min-height:150px;-webkit-mask-image:linear-gradient(transparent,#000 14%,#000 80%,transparent);mask-image:linear-gradient(transparent,#000 14%,#000 80%,transparent)}
+#chain{position:absolute;left:0;right:0;top:0;transition:transform .45s cubic-bezier(.3,.8,.3,1)}
+#chain::before{content:"";position:absolute;left:50%;top:-400px;bottom:-400px;width:2px;margin-left:-1px;background:linear-gradient(var(--brass),#7b6636)}
+.b{position:absolute;left:50%;transition:transform .35s,opacity .35s,box-shadow .35s;opacity:.38}
+.b.small,.b.big{border-radius:50%;background:radial-gradient(circle at 33% 28%,var(--wood2),var(--wood) 55%,#3b1417);box-shadow:0 3px 6px #0008,inset 0 -3px 5px #0006}
+.small{width:30px;height:30px;margin-left:-15px}
+.big{width:46px;height:46px;margin-left:-23px}
+.link{width:14px;height:14px;margin-left:-7px;background:var(--brass);transform:rotate(45deg)}
+.cross,.medal{display:grid;place-items:center;color:var(--brass);margin-left:-30px;width:60px;height:80px;font-size:68px;line-height:1}
+.medal{height:60px;border-radius:50%;border:2px solid var(--brass);font-size:30px;background:#1d2230}
+.b.done{opacity:.55}
+.b.now{opacity:1;transform:scale(1.28);box-shadow:0 0 0 3px #c9a45c55,0 0 26px #c9a45caa,inset 0 -3px 5px #0006}
+.link.now{transform:rotate(45deg) scale(1.9)}
+.cross.now,.medal.now{box-shadow:none;text-shadow:0 0 20px var(--brass)}
+section{background:var(--panel);border-top:1px solid #2a3040;padding:14px 22px 0;max-height:46dvh;display:flex;flex-direction:column;overflow:hidden;user-select:text}
+.ph{flex:none;padding-bottom:8px;border-bottom:1px solid #2a3040}
+.pb{flex:1;min-height:0;overflow:auto;padding-top:10px;padding-bottom:12px;-webkit-overflow-scrolling:touch}
+.pb h3{margin:4px 0 8px;font-size:calc(1.1rem*var(--z,1));font-weight:600}
+.kick{color:var(--brass);font-size:calc(.95rem*var(--z,1));margin:0 0 2px}
+section h2{margin:0;line-height:1.25;font-size:calc(1.25rem*var(--z,1));font-weight:600}
+section p{margin:0 0 10px;line-height:1.55;font-size:calc(1.05rem*var(--z,1));max-width:60ch}
+nav{display:flex;gap:10px;padding:10px 16px 14px;background:var(--panel)}
+button{font:inherit;color:var(--ink);background:#222838;border:1px solid #333b50;border-radius:14px;padding:13px 16px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+#next{flex:1;background:var(--brass);color:#1a1408;border:0;font-weight:700;font-size:1.05rem}
+button:disabled{opacity:.35}
+dialog{background:var(--panel);color:var(--ink);border:1px solid #333b50;border-radius:18px;padding:20px;width:min(92vw,420px)}
+dialog::backdrop{background:#000a}
+dialog h3{margin:0 0 10px}
+.opt{display:block;width:100%;text-align:left;margin-bottom:8px}
+.opt.sel{border-color:var(--brass)}
+.opt small{display:block;color:var(--dim)}
+label{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+#app{position:relative;z-index:1}
+#bg{position:fixed;inset:0;z-index:0;display:none;background:center/cover no-repeat;opacity:.3}
+body.bgmode #bg{display:block}
+#pic{position:absolute;top:12px;right:14px;width:58px;height:74px;z-index:3;display:none;border-radius:10px;border:2px solid var(--brass);background:center/cover no-repeat;box-shadow:0 4px 14px #000a;transform:rotate(3deg)}
+body.picmode #pic{display:block}
+#for{color:var(--brass);font-size:.9rem;margin:3px 0 0;min-height:0}
+input[type=text],select{width:100%;font:inherit;color:var(--ink);background:#222838;border:1px solid #333b50;border-radius:12px;padding:11px 12px;margin-bottom:8px}
+dialog{max-height:90dvh;overflow:auto}
+.row{display:flex;gap:8px;margin-bottom:8px}.row button{flex:1}
+hr{border:0;border-top:1px solid #2a3040;margin:12px 0}
+@media(prefers-reduced-motion:reduce){#chain,.b{transition:none}}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="app">
+<div id="pic" role="img" aria-label="Foto de quem você está rezando"></div>
+<header><h1 id="mname"></h1><p id="mday"></p><p id="for"></p><div class="dots" id="dots"></div></header>
+<div id="stage" aria-label="Toque ou deslize para cima para avançar uma conta"><div id="chain"></div></div>
+<section id="panel" aria-live="polite"></section>
+<nav><button id="prev" aria-label="Conta anterior">◀</button><button id="next">Próxima conta</button><button id="menu" aria-label="Opções">☰</button></nav>
+</div>
+<dialog id="dlg">
+<h3>Mistérios</h3><div id="opts"></div><hr>
+<h3>Rezando por alguém</h3>
+<input type="text" id="who" placeholder="Nome (opcional)" maxlength="40" autocomplete="off">
+<select id="pmode" aria-label="Onde mostrar a foto"><option value="bg">Foto como fundo</option><option value="corner">Foto no canto da tela</option></select>
+<div class="row"><button id="pick">Escolher foto</button><button id="rmfoto">Remover foto</button></div>
+<input type="file" id="file" accept="image/*" hidden>
+<hr>
+<label>Vibrar a cada conta <input type="checkbox" id="vib"></label>
+<label>Manter tela acesa <input type="checkbox" id="wake"></label>
+<label>Tamanho do texto <input type="range" id="size" min="0.9" max="1.5" step="0.1"></label>
+<div style="display:flex;gap:8px;margin-top:12px"><button id="reset">Recomeçar</button><button id="close" style="flex:1">Fechar</button></div>
+</dialog>
+<script>
+const $=s=>document.querySelector(s);
+const P={
+cruz:["Sinal da Cruz","Pelo sinal da Santa Cruz, livrai-nos, Deus, nosso Senhor, dos nossos inimigos. Em nome do Pai, do Filho e do Espírito Santo. Amém."],
+creio:["Creio","Creio em Deus Pai todo-poderoso, criador do céu e da terra; e em Jesus Cristo, seu único Filho, nosso Senhor, que foi concebido pelo poder do Espírito Santo, nasceu da Virgem Maria, padeceu sob Pôncio Pilatos, foi crucificado, morto e sepultado; desceu à mansão dos mortos, ressuscitou ao terceiro dia, subiu aos céus, está sentado à direita de Deus Pai todo-poderoso, donde há de vir a julgar os vivos e os mortos. Creio no Espírito Santo, na santa Igreja Católica, na comunhão dos santos, na remissão dos pecados, na ressurreição da carne, na vida eterna. Amém."],
+pai:"Pai nosso, que estais nos céus, santificado seja o vosso nome; venha a nós o vosso reino; seja feita a vossa vontade, assim na terra como no céu. O pão nosso de cada dia nos dai hoje; perdoai-nos as nossas ofensas, assim como nós perdoamos a quem nos tem ofendido; e não nos deixeis cair em tentação, mas livrai-nos do mal. Amém.",
+ave:"Ave Maria, cheia de graça, o Senhor é convosco; bendita sois vós entre as mulheres e bendito é o fruto do vosso ventre, Jesus. Santa Maria, Mãe de Deus, rogai por nós, pecadores, agora e na hora da nossa morte. Amém.",
+gloria:"Glória ao Pai, ao Filho e ao Espírito Santo. Como era no princípio, agora e sempre, e por todos os séculos dos séculos. Amém.",
+fatima:"Ó meu Jesus, perdoai-nos, livrai-nos do fogo do inferno, levai as almas todas para o céu e socorrei principalmente aquelas que mais precisarem.",
+salve:"Salve, Rainha, Mãe de misericórdia, vida, doçura e esperança nossa, salve! A vós bradamos, os degredados filhos de Eva; a vós suspiramos, gemendo e chorando neste vale de lágrimas. Eia, pois, advogada nossa, esses vossos olhos misericordiosos a nós volvei; e depois deste desterro mostrai-nos Jesus, bendito fruto do vosso ventre, ó clemente, ó piedosa, ó doce sempre Virgem Maria.",
+resp:"V. Rogai por nós, santa Mãe de Deus. R. Para que sejamos dignos das promessas de Cristo.",
+final:"Ó Deus, cujo Filho Unigênito, por sua vida, morte e ressurreição, nos alcançou o prêmio da vida eterna, concedei-nos, nós Vos pedimos, que meditando esses mistérios no santíssimo Rosário da Bem-aventurada Virgem Maria, imitemos o que contêm e alcancemos o que prometem. Por Cristo, nosso Senhor. Amém."};
+const M={
+gozosos:{n:"Mistérios Gozosos",d:"segundas e sábados",l:["A Anunciação do Anjo a Maria","A Visita de Maria a Isabel","O Nascimento de Jesus em Belém","A Apresentação do Menino Jesus no Templo","O Encontro do Menino Jesus no Templo"]},
+luminosos:{n:"Mistérios Luminosos",d:"quintas-feiras",l:["O Batismo de Jesus no Jordão","A Revelação de Jesus nas Bodas de Caná","O Anúncio do Reino e o convite à conversão","A Transfiguração de Jesus","A Instituição da Eucaristia"]},
+dolorosos:{n:"Mistérios Dolorosos",d:"terças e sextas-feiras",l:["A Agonia de Jesus no Horto","A Flagelação de Jesus","A Coroação de Espinhos","Jesus carrega a Cruz até o Calvário","A Crucifixão e Morte de Jesus"]},
+gloriosos:{n:"Mistérios Gloriosos",d:"quartas-feiras e domingos",l:["A Ressurreição de Jesus","A Ascensão de Jesus ao Céu","A Vinda do Espírito Santo","A Assunção de Maria ao Céu","A Coroação de Maria no Céu"]}};
+const DIA=["gloriosos","gozosos","dolorosos","gloriosos","luminosos","dolorosos","gozosos"];
+// sequência de contas
+const S=[{t:"cross",k:"inicio",title:"Sinal da Cruz e Creio"},{t:"big",k:"pai",title:"Pai-Nosso",note:"Pelas intenções do Santo Padre"}];
+["Pela fé","Pela esperança","Pela caridade"].forEach(n=>S.push({t:"small",k:"ave",title:"Ave-Maria",note:n}));
+S.push({t:"link",k:"gloria",title:"Glória"});
+for(let d=0;d<5;d++){S.push({t:"big",k:"pai",d,title:"Pai-Nosso"});
+ for(let a=1;a<=10;a++)S.push({t:"small",k:"ave",d,a,title:"Ave-Maria",note:a+" de 10"});
+ S.push({t:"link",k:"gloria",d,f:1,title:"Glória e Ó meu Jesus"})}
+S.push({t:"medal",k:"fim",title:"Salve Rainha e Oração final"});
+const SZ={cross:[60,80],big:[46,46],small:[30,30],link:[14,14],medal:[60,60]};
+let st={who:'',pmode:'bg',set:DIA[new Date().getDay()],i:0,vib:true,wake:false,z:1,day:new Date().toDateString()};
+try{const s=JSON.parse(localStorage.getItem("rosario"));if(s){st={...st,...s};if(s.day!==st.day||s.i>=S.length-1){st.set=DIA[new Date().getDay()];st.i=0;st.day=new Date().toDateString()}}}catch(e){}
+const save=()=>{try{localStorage.setItem("rosario",JSON.stringify(st))}catch(e){}};
+// montar contas
+const chain=$("#chain");let cy=[],y=0;
+S.forEach((s,i)=>{const [w,h]=SZ[s.t];y+=i?(SZ[S[i-1].t][1]+h)/2+(s.t==="link"||S[i-1].t==="link"?12:15):h/2;cy.push(y);
+ const e=document.createElement("div");e.className="b "+s.t;e.style.top=(y-h/2)+"px";
+ if(s.t==="cross")e.textContent="✝";if(s.t==="medal")e.textContent="✦";chain.appendChild(e)});
+chain.style.height=y+"px";
+const beads=[...chain.children];
+$("#dots").innerHTML="<i></i>".repeat(5);
+const FK="rosario-foto";
+function applyPhoto(){let u=null;try{u=localStorage.getItem(FK)}catch(e){}
+ const bg=$("#bg"),pic=$("#pic");bg.style.backgroundImage=pic.style.backgroundImage=u?`url("${u}")`:"";
+ document.body.classList.toggle("bgmode",!!u&&st.pmode==="bg");document.body.classList.toggle("picmode",!!u&&st.pmode==="corner");
+ $("#for").textContent=st.who?"Rezando por "+st.who:"";return !!u}
+async function setPhoto(f){try{const bmp=await createImageBitmap(f),k=Math.min(1,900/Math.max(bmp.width,bmp.height));
+ const c=document.createElement("canvas");c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+ localStorage.setItem(FK,c.toDataURL("image/jpeg",.82));applyPhoto()}catch(e){alert("Não foi possível salvar essa foto. Tente outra imagem.")}}
+function render(){
+ const m=M[st.set],s=S[st.i],stage=$("#stage");
+ $("#mname").textContent=m.n;$("#mday").textContent="Costumeiros em "+m.d;
+ [...$("#dots").children].forEach((d,k)=>{const cur=s.d===k||(s.d==null&&st.i>5&&false);const past=(s.d!=null&&k<s.d)||st.i>=S.length-1||(s.d==null&&st.i>5);
+  d.className=(past||s.d===k?"on ":"")+(s.d===k?"cur":"")});
+ beads.forEach((b,i)=>{b.classList.toggle("now",i===st.i);b.classList.toggle("done",i<st.i)});
+ chain.style.transform=`translateY(${stage.clientHeight*.4-cy[st.i]}px)`;
+ let kick="",h=s.title,body="";
+ if(s.k==="inicio")body=`<p>${P.cruz[1]}</p><h3>${P.creio[0]}</h3><p>${P.creio[1]}</p>`,h=P.cruz[0];
+ else if(s.k==="pai"){body=`<p>${P.pai}</p>`;if(s.d!=null){kick=`${s.d+1}º mistério`;h=m.l[s.d]}else kick="Oferecimento"}
+ else if(s.k==="ave"){body=`<p>${P.ave}</p>`;kick=s.d!=null?`${s.d+1}º mistério · ${s.a} de 10`:s.note;if(s.d!=null)h=m.l[s.d]}
+ else if(s.k==="gloria"){body=`<p>${P.gloria}</p>`+(s.f?`<h3>Oração de Fátima</h3><p>${P.fatima}</p>`:"");kick=s.d!=null?`Fim do ${s.d+1}º mistério`:"Introdução"}
+ else{body=`<p>${P.salve}</p><p>${P.resp}</p><h3>Oração final</h3><p>${P.final}</p><p>${P.cruz[1].replace(/^.*inimigos\. /,"")}</p>`;kick="Conclusão"}
+ $("#panel").innerHTML=`<div class="ph">`+(kick?`<div class="kick">${kick}</div>`:"")+`<h2>${h}</h2></div><div class="pb">${body}</div>`;
+ $("#prev").disabled=st.i===0;$("#next").textContent=st.i>=S.length-1?"Amém · recomeçar":"Próxima conta";
+ document.documentElement.style.setProperty("--z",st.z);applyPhoto();save()}
+function go(n){if(n<0)return;if(n>=S.length){st.i=0;render();return}st.i=n;if(st.vib&&navigator.vibrate)navigator.vibrate(S[n].t==="small"?8:S[n].t==="link"?14:30);render()}
+$("#next").onclick=()=>go(st.i+1);$("#prev").onclick=()=>go(st.i-1);
+const stage=$("#stage");let y0=null,moved=false;
+stage.addEventListener("pointerdown",e=>{y0=e.clientY;moved=false});
+stage.addEventListener("pointerup",e=>{if(y0==null)return;const dy=e.clientY-y0;y0=null;if(dy<-30)go(st.i+1);else if(dy>30)go(st.i-1);else go(st.i+1)});
+addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="ArrowDown"||e.key===" ")go(st.i+1);if(e.key==="ArrowLeft"||e.key==="ArrowUp")go(st.i-1)});
+addEventListener("resize",render);
+// menu
+const dlg=$("#dlg");
+function opts(){$("#opts").innerHTML="";Object.entries(M).forEach(([k,m])=>{const b=document.createElement("button");b.className="opt"+(k===st.set?" sel":"");b.innerHTML=`${m.n}<small>${m.d}</small>`;b.onclick=()=>{st.set=k;st.i=0;dlg.close();render()};$("#opts").appendChild(b)})}
+$("#menu").onclick=()=>{opts();$("#vib").checked=st.vib;$("#wake").checked=st.wake;$("#size").value=st.z;$("#who").value=st.who;$("#pmode").value=st.pmode;dlg.showModal()};
+$("#close").onclick=()=>dlg.close();$("#reset").onclick=()=>{st.i=0;dlg.close();render()};
+$("#pick").onclick=()=>$("#file").click();
+$("#file").onchange=async e=>{const f=e.target.files[0];if(f)await setPhoto(f);e.target.value=""};
+$("#rmfoto").onclick=()=>{try{localStorage.removeItem(FK)}catch(e){}applyPhoto()};
+$("#who").oninput=e=>{st.who=e.target.value.trim();applyPhoto();save()};
+$("#pmode").onchange=e=>{st.pmode=e.target.value;applyPhoto();save()};
+$("#vib").onchange=e=>{st.vib=e.target.checked;save()};
+$("#size").oninput=e=>{st.z=+e.target.value;render()};
+let lock=null;async function wake(){try{if(st.wake&&"wakeLock"in navigator)lock=await navigator.wakeLock.request("screen");else if(lock){lock.release();lock=null}}catch(e){}}
+$("#wake").onchange=e=>{st.wake=e.target.checked;save();wake()};
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")wake()});
+if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+render();wake();
+</script>
+</body>
+</html>
